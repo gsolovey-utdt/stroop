@@ -116,16 +116,7 @@ input[type="text"]:focus { border-color: var(--accent2); }
 }
 .btn-share:active { opacity: .85; transform: scale(.98); }
 
-/* ── INSTRUCTIONS DEMO ───────────────── */
-.demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 4px; }
-.demo-card { border-radius: 10px; padding: 14px 12px; text-align: center; }
-.demo-card.ok  { background: rgba(76,175,125,.08); border: 1px solid rgba(76,175,125,.2); }
-.demo-card.bad { background: rgba(232,91,91,.08);  border: 1px solid rgba(232,91,91,.2); }
-.demo-tag { font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 8px; }
-.demo-tag.ok  { color: var(--green); }
-.demo-tag.bad { color: var(--red); }
-.demo-word { font-family: 'Playfair Display', serif; font-size: clamp(1.5rem,5vw,2.2rem); font-weight: 900; line-height: 1; margin-bottom: 6px; }
-.demo-caption { font-size: .72rem; color: var(--text-dim); line-height: 1.4; }
+
 
 .step-list { display: flex; flex-direction: column; gap: 10px; }
 .step { display: flex; align-items: flex-start; gap: 12px; }
@@ -280,7 +271,6 @@ input[type="text"]:focus { border-color: var(--accent2); }
     </div>
   </div>
 
-
   <!-- Teclas -->
   <div class="card">
     <div class="card-title">Botones / teclas de respuesta</div>
@@ -324,13 +314,13 @@ input[type="text"]:focus { border-color: var(--accent2); }
 
   <div class="response-area">
     <div class="response-buttons">
-      <button class="res-btn" id="rbtn1" onclick="recordResponse('1')" ontouchstart="">
+      <button class="res-btn" id="rbtn1">
         <span class="rnum">1</span><span class="rdot" style="background:var(--red)"></span>
       </button>
-      <button class="res-btn" id="rbtn2" onclick="recordResponse('2')" ontouchstart="">
+      <button class="res-btn" id="rbtn2">
         <span class="rnum">2</span><span class="rdot" style="background:var(--green)"></span>
       </button>
-      <button class="res-btn" id="rbtn3" onclick="recordResponse('3')" ontouchstart="">
+      <button class="res-btn" id="rbtn3">
         <span class="rnum">3</span><span class="rdot" style="background:var(--white-ink);border:1px solid #555;"></span>
       </button>
     </div>
@@ -565,6 +555,25 @@ function setBtns(on) {
     el.style.pointerEvents = on ? 'auto' : 'none';
   });
 }
+
+/* ── TOUCH HANDLERS (registered once, fire on touchstart for zero delay) ── */
+(function() {
+  const map = { rbtn1:'1', rbtn2:'2', rbtn3:'3' };
+  Object.entries(map).forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    // touchstart fires immediately — no 300ms delay
+    el.addEventListener('touchstart', e => {
+      e.preventDefault(); // stop ghost click from firing later
+      recordResponse(key);
+    }, { passive: false });
+    // fallback click for mouse / keyboard navigation
+    el.addEventListener('click', e => {
+      // only fire click if not already handled by touchstart
+      if(e.sourceCapabilities && e.sourceCapabilities.firesTouchEvents) return;
+      recordResponse(key);
+    });
+  });
+})();
 
 /* ── TRIAL LOOP ───────────────────────── */
 function runTrial() {
