@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Stroop Test · NyPE</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+
+:root {
+  --bg:        #0d0e12;
+  --surface:   #161820;
+  --surface2:  #1c1e28;
+  --border:    #252730;
+  --accent:    #e8c547;
+  --accent2:   #5b8dee;
+  --accent3:   #c97aee;
+  --muted:     #555870;
+  --text:      #d8dae8;
+  --text-dim:  #7e8198;
+  --red:       #e85b5b;
+  --green:     #4caf7d;
+  --white-ink: #f0f0f0;
+  --gold:      #e8c547;
+  --silver:    #a0a8c0;
+  --bronze:    #cd7f32;
+  --radius:    12px;
+  --tr:        0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; -webkit-text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  overflow-x: hidden; touch-action: manipulation;
+}
+body::before {
+  content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(91,141,238,.09) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 40% at 80% 110%, rgba(232,197,71,.05) 0%, transparent 60%);
+}
+
+/* ── SCREENS ─────────────────────────────── */
+.screen {
+  display: none; width: 100%; max-width: 900px;
+  padding: 28px 18px 44px;
+  animation: fadeUp .35s ease both;
+  position: relative; z-index: 1;
+}
+.screen.active { display: block; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(14px) } to { opacity:1; transform:none } }
+
+/* Trial screen is full-viewport */
+#screen-trial {
+  display: none; flex-direction: column;
+  align-items: center; justify-content: space-between;
+  min-height: 100dvh; padding: 24px 18px 20px;
+  text-align: center; position: fixed; inset: 0; z-index: 10;
+  background: var(--bg);
+}
+#screen-trial.active { display: flex; }
+
+/* ── COMMON COMPONENTS ─────────────────── */
+.lab-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-family: 'DM Mono', monospace; font-size: 11px; letter-spacing: .12em;
+  color: var(--accent); text-transform: uppercase;
+  border: 1px solid rgba(232,197,71,.25); padding: 6px 14px; border-radius: 100px; margin-bottom: 20px;
+}
+.lab-badge::before {
+  content: ''; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--accent); animation: blink 2s ease infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+h1 {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(2rem, 8vw, 3.4rem); font-weight: 900; line-height: 1.08;
+  color: #fff; margin-bottom: 12px; letter-spacing: -.02em;
+}
+h1 span { color: var(--accent); }
+.subtitle { color: var(--text-dim); font-size: clamp(.88rem,3vw,1rem); line-height: 1.6; max-width: 520px; margin-bottom: 32px; }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 14px; }
+.card-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+
+.key-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.key-pill {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 14px; font-size: clamp(.85rem,3vw,.95rem);
+}
+.key-num { font-family: 'DM Mono', monospace; font-size: .85rem; font-weight: 500; background: rgba(255,255,255,.08); border-radius: 6px; padding: 2px 8px; color: var(--accent); }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.dot-red   { background: var(--red); }
+.dot-green { background: var(--green); }
+.dot-white { background: var(--white-ink); border: 1px solid #444; }
+
+.field { margin-bottom: 4px; }
+label { display: block; font-size: .82rem; color: var(--text-dim); margin-bottom: 6px; }
+input[type="text"] {
+  width: 100%; background: rgba(255,255,255,.04); border: 1px solid var(--border);
+  border-radius: 8px; padding: 13px 16px; color: var(--text);
+  font-family: 'DM Mono', monospace; font-size: 16px;
+  outline: none; transition: border-color var(--tr); -webkit-appearance: none;
+}
+input[type="text"]:focus { border-color: var(--accent2); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 15px 28px; border-radius: 9px; font-size: clamp(.9rem,3.5vw,.95rem); font-weight: 500;
+  cursor: pointer; border: none; transition: all var(--tr);
+  -webkit-appearance: none; touch-action: manipulation; user-select: none; min-height: 52px;
+}
+.btn-primary  { background: var(--accent); color: #0d0e12; width: 100%; }
+.btn-primary:active { background: #f0d060; transform: scale(.98); }
+.btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:active { opacity: .7; }
+.btn-sm { padding: 11px 20px; font-size: .85rem; min-height: 44px; }
+.btn-danger { color: var(--red); border-color: rgba(232,91,91,.3); }
+
+/* ── TRIAL SCREEN ─────────────────────── */
+.progress-bar-wrap { width: 100%; max-width: 500px; }
+.progress-meta { display:flex; justify-content:center; font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-bottom:8px; }
+.progress-track { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+.progress-fill  { height: 100%; background: var(--accent); border-radius: 2px; transition: width .3s ease; }
+
+.stimulus-area { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; }
+.fixation { font-size: clamp(2.5rem,10vw,4rem); color: var(--muted); line-height:1; animation: fixIn .5s ease; }
+@keyframes fixIn { from{opacity:0;transform:scale(.75)} to{opacity:1;transform:scale(1)} }
+.stimulus-word {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3rem,13vw,6rem); font-weight: 900; letter-spacing: -.02em; line-height: 1;
+  text-shadow: 0 2px 32px rgba(0,0,0,.5); animation: wordIn .15s ease both;
+}
+@keyframes wordIn { from{opacity:0;transform:scale(.92)} to{opacity:1;transform:scale(1)} }
+
+.response-area { width:100%; max-width:460px; display:flex; flex-direction:column; gap:10px; padding-bottom:env(safe-area-inset-bottom,12px); }
+.response-buttons { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.res-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:16px 8px; background:var(--surface); border:1.5px solid var(--border);
+  border-radius:12px; cursor:pointer; transition:all .12s;
+  user-select:none; touch-action:manipulation; -webkit-tap-highlight-color:transparent; min-height:80px;
+}
+.res-btn:active, .res-btn.pressed { transform:scale(.94); border-color:var(--accent2); background:rgba(91,141,238,.12); }
+.res-btn .rnum  { font-family:'DM Mono',monospace; font-size:.75rem; color:var(--muted); }
+.res-btn .rdot  { width:20px; height:20px; border-radius:50%; }
+.res-btn .rlabel { font-size:clamp(.78rem,3vw,.88rem); color:var(--text-dim); }
+.keyboard-hint  { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); text-align:center; letter-spacing:.06em; }
+
+.feedback-flash { position:fixed; inset:0; pointer-events:none; z-index:200; opacity:0; transition:opacity .08s; }
+.feedback-flash.correct   { background:rgba(76,175,125,.1); }
+.feedback-flash.incorrect { background:rgba(232,91,91,.14); }
+.feedback-flash.show      { opacity:1; }
+
+/* ── RESULTS ─────────────────────────── */
+.flex-between { display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px; }
+.text-muted   { color:var(--text-dim); font-size:.82rem; }
+
+/* Score hero */
+.score-hero {
+  background: linear-gradient(135deg, rgba(232,197,71,.12), rgba(232,197,71,.04));
+  border: 1px solid rgba(232,197,71,.3); border-radius: var(--radius);
+  padding: 24px; margin-bottom: 14px; text-align: center;
+}
+.score-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--accent); margin-bottom:8px; }
+.score-value { font-family:'Playfair Display',serif; font-size:clamp(3rem,10vw,4.5rem); font-weight:900; color:var(--accent); line-height:1; }
+.score-sub   { font-size:.8rem; color:var(--text-dim); margin-top:8px; }
+.score-formula { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); margin-top:6px; }
+
+/* Stats grid */
+.results-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:14px; }
+@media (max-width:400px) { .results-grid { grid-template-columns:1fr; } }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+.stat-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+.stat-value { font-family:'Playfair Display',serif; font-size:clamp(1.6rem,6vw,2rem); font-weight:700; color:#fff; }
+.stat-unit  { font-size:.8rem; color:var(--text-dim); font-family:'DM Sans',sans-serif; }
+.stat-sub   { font-size:.72rem; color:var(--text-dim); margin-top:4px; line-height:1.4; }
+.stat-hist  { font-size:.72rem; color:var(--accent); margin-top:4px; }
+.interference-card { background:linear-gradient(135deg,rgba(232,197,71,.08),rgba(232,197,71,.02)); border-color:rgba(232,197,71,.2); }
+.interference-card .stat-value { color:var(--accent); }
+
+/* Charts */
+.chart-wrap  { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:12px; }
+.chart-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+.chart-container { position:relative; height:220px; }
+
+/* Trial table */
+.trial-table-wrap { max-height:260px; overflow-y:auto; overflow-x:auto; border-radius:8px; border:1px solid var(--border); -webkit-overflow-scrolling:touch; }
+table  { width:100%; border-collapse:collapse; font-size:.75rem; min-width:480px; }
+thead  { position:sticky; top:0; background:#1b1d25; z-index:1; }
+th { padding:10px; text-align:left; font-family:'DM Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:8px 10px; border-bottom:1px solid rgba(37,39,48,.7); font-family:'DM Mono',monospace; white-space:nowrap; }
+tr:last-child td { border-bottom:none; }
+td.yes { color:var(--green); } td.no { color:var(--red); }
+
+/* ── LEADERBOARD ─────────────────────── */
+.leaderboard-wrap { margin-bottom:14px; }
+.lb-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+.lb-title  { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.lb-status { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
+.lb-status.ok   { color:var(--green); }
+.lb-status.err  { color:var(--red); }
+.lb-status.spin { color:var(--accent2); animation:spin .8s linear infinite; display:inline-block; }
+@keyframes spin { to{transform:rotate(360deg)} }
+
+.lb-row {
+  display:grid; grid-template-columns:36px 1fr auto auto;
+  align-items:center; gap:10px;
+  padding:12px 14px; border-radius:9px; margin-bottom:6px;
+  background:var(--surface); border:1px solid var(--border);
+  transition:border-color .15s;
+}
+.lb-row.is-you  { border-color:rgba(232,197,71,.4); background:linear-gradient(90deg,rgba(232,197,71,.07),transparent); }
+.lb-row.rank-1  { border-color:rgba(232,197,71,.5); }
+.lb-row.rank-2  { border-color:rgba(160,168,192,.3); }
+.lb-row.rank-3  { border-color:rgba(205,127,50,.3); }
+
+.lb-rank { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; text-align:center; }
+.lb-rank.rank-1 { color:var(--gold); }
+.lb-rank.rank-2 { color:var(--silver); }
+.lb-rank.rank-3 { color:var(--bronze); }
+.lb-rank.other  { color:var(--muted); font-size:.9rem; }
+
+.lb-name { font-size:.9rem; font-weight:500; color:var(--text); }
+.lb-name .you-badge { font-family:'DM Mono',monospace; font-size:.65rem; color:var(--accent); background:rgba(232,197,71,.15); border:1px solid rgba(232,197,71,.3); padding:1px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; }
+.lb-meta { font-size:.72rem; color:var(--text-dim); font-family:'DM Mono',monospace; }
+.lb-score { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--text); text-align:right; }
+.lb-score.rank-1 { color:var(--gold); }
+
+.lb-empty { text-align:center; padding:24px; color:var(--muted); font-size:.85rem; font-family:'DM Mono',monospace; }
+
+/* setup info box */
+.setup-box {
+  background: rgba(91,141,238,.06); border: 1px solid rgba(91,141,238,.2);
+  border-radius: 9px; padding: 16px; margin-bottom: 14px;
+  font-size: .8rem; color: var(--text-dim); line-height: 1.6;
+}
+.setup-box code { color: var(--accent2); font-family: 'DM Mono', monospace; font-size: .78rem; }
+.setup-box strong { color: var(--text); }
+
+.actions-row { display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+.actions-row-inner { display:flex; gap:10px; flex-wrap:wrap; }
+.storage-note { font-size:.72rem; color:var(--muted); line-height:1.6; background:rgba(255,255,255,.02); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+.storage-note code { color:var(--accent2); font-family:'DM Mono',monospace; }
+
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1 · INICIO
+══════════════════════════════════════════ -->
+<div id="screen-start" class="screen active">
+  <div class="lab-badge">NyPE · Stroop Test</div>
+  <h1>Efecto<br><span>Stroop</span></h1>
+  <p class="subtitle">
+    Identificá el <strong>color de la tinta</strong> en que está escrita cada palabra,
+    ignorando su significado. Respondé lo más rápido y preciso posible.
+  </p>
+
+  <div class="card">
+    <div class="card-title">Botones / teclas de respuesta</div>
+    <div class="key-row">
+      <div class="key-pill"><span class="key-num">1</span><span class="dot dot-red"></span>Rojo</div>
+      <div class="key-pill"><span class="key-num">2</span><span class="dot dot-green"></span>Verde</div>
+      <div class="key-pill"><span class="key-num">3</span><span class="dot dot-white"></span>Blanco</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Participante</div>
+    <div class="field">
+      <label>Tu nombre o ID (aparecerá en el ranking)</label>
+      <input type="text" id="participant-id" placeholder="Ej. Ana G." maxlength="30"
+             autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="startExperiment()" style="margin-top:4px;">
+    Comenzar →
+  </button>
+  <p class="text-muted" style="margin-top:12px; text-align:center;">24 ensayos · ~2 minutos</p>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2 · TAREA
+══════════════════════════════════════════ -->
+<div id="screen-trial" class="screen">
+  <div class="progress-bar-wrap">
+    <div class="progress-meta">Ensayo <span id="trial-num">1</span>&nbsp;de&nbsp;24</div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  </div>
+
+  <div class="stimulus-area">
+    <div class="fixation" id="fixation">+</div>
+    <div class="stimulus-word" id="stimulus" style="display:none"></div>
+  </div>
+
+  <div class="response-area">
+    <div class="response-buttons">
+      <button class="res-btn" id="rbtn1" onclick="recordResponse('1')" ontouchstart="">
+        <span class="rnum">1</span><span class="rdot" style="background:var(--red)"></span><span class="rlabel">Rojo</span>
+      </button>
+      <button class="res-btn" id="rbtn2" onclick="recordResponse('2')" ontouchstart="">
+        <span class="rnum">2</span><span class="rdot" style="background:var(--green)"></span><span class="rlabel">Verde</span>
+      </button>
+      <button class="res-btn" id="rbtn3" onclick="recordResponse('3')" ontouchstart="">
+        <span class="rnum">3</span><span class="rdot" style="background:var(--white-ink);border:1px solid #555;"></span><span class="rlabel">Blanco</span>
+      </button>
+    </div>
+    <div class="keyboard-hint">O presioná las teclas 1 · 2 · 3</div>
+  </div>
+</div>
+
+<div class="feedback-flash" id="feedback-flash"></div>
+
+
+<!-- ══════════════════════════════════════════
+     SCREEN 3 · RESULTADOS
+══════════════════════════════════════════ -->
+<div id="screen-results" class="screen">
+
+  <div class="flex-between" style="margin-bottom:22px;">
+    <div>
+      <div class="lab-badge">Resultados</div>
+      <h1 style="font-size:clamp(1.8rem,6vw,2.4rem); margin-bottom:4px;">Tu <span>desempeño</span></h1>
+      <p id="participant-label" class="text-muted"></p>
+    </div>
+  </div>
+
+  <!-- Puntaje total -->
+  <div class="score-hero">
+    <div class="score-label">Puntaje total</div>
+    <div class="score-value" id="res-score">0</div>
+    <div class="score-sub" id="res-score-rank"></div>
+    <div class="score-formula">Fórmula: por cada respuesta correcta → 100&nbsp;+&nbsp;400·e<sup>−TR/700</sup> pts</div>
+  </div>
+
+  <!-- Stats summary -->
+  <div class="results-grid">
+    <div class="stat-card">
+      <div class="stat-label">TR Medio · Congruente</div>
+      <div class="stat-value" id="res-rt-con">—</div>
+      <div class="stat-unit">ms</div>
+      <div class="stat-sub"  id="res-acc-con"></div>
+      <div class="stat-hist" id="res-rt-con-hist"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">TR Medio · Incongruente</div>
+      <div class="stat-value" id="res-rt-inc">—</div>
+      <div class="stat-unit">ms</div>
+      <div class="stat-sub"  id="res-acc-inc"></div>
+      <div class="stat-hist" id="res-rt-inc-hist"></div>
+    </div>
+    <div class="stat-card interference-card">
+      <div class="stat-label">Interferencia Stroop</div>
+      <div class="stat-value" id="res-interference">—</div>
+      <div class="stat-unit">ms (Inc − Con)</div>
+      <div class="stat-sub"  id="res-interference-hist"></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Precisión Global</div>
+      <div class="stat-value" id="res-accuracy">—</div>
+      <div class="stat-unit">%</div>
+      <div class="stat-sub"  id="res-accuracy-hist"></div>
+    </div>
+  </div>
+
+  <!-- Leaderboard -->
+  <div class="leaderboard-wrap">
+    <div class="card" style="padding:20px;">
+      <div class="lb-header">
+        <div class="lb-title">🏆 Tabla de posiciones</div>
+        <span class="lb-status" id="lb-status">cargando…</span>
+      </div>
+      <div id="lb-rows"></div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-wrap">
+    <div class="chart-title">Tiempo de reacción medio — Tú vs. Promedio histórico (ms)</div>
+    <div class="chart-container"><canvas id="chart-rt"></canvas></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">Precisión por condición — Tú vs. Promedio histórico (%)</div>
+    <div class="chart-container"><canvas id="chart-acc"></canvas></div>
+  </div>
+
+  <!-- Trial table -->
+  <div class="card">
+    <div class="card-title">Datos por ensayo</div>
+    <div class="trial-table-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>Cond.</th><th>Palabra</th><th>Tinta</th>
+          <th>C. correcta</th><th>Respuesta</th><th>OK</th><th>TR (ms)</th><th>Pts</th>
+        </tr></thead>
+        <tbody id="trial-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="actions-row">
+    <button class="btn btn-primary" onclick="restartExperiment()">Nuevo intento →</button>
+    <div class="actions-row-inner">
+      <button class="btn btn-secondary btn-sm" onclick="downloadCSV()">Descargar CSV</button>
+      <button class="btn btn-secondary btn-sm btn-danger" onclick="clearLocalHistory()">Borrar historial local</button>
+    </div>
+    <div class="storage-note" id="storage-note">
+      💾 Los datos se guardan en Supabase (compartido entre todos los dispositivos) y también localmente en este navegador como respaldo.
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════ -->
+<script>
+/* ════════════════════════════════════════════
+   ⚙️  CONFIGURACIÓN — EDITÁ ESTOS VALORES
+   ════════════════════════════════════════════
+   1. Creá una cuenta gratuita en https://supabase.com
+   2. Nuevo proyecto → copiá la URL y la anon key
+   3. En el SQL Editor ejecutá el script de setup
+      que se incluye al final de este archivo
+   ════════════════════════════════════════════ */
+const SUPABASE_URL      = 'https://irryksaoygdklwtsjsru.supabase.co';   // ← reemplazá
+const SUPABASE_ANON_KEY = 'sb_publishable_9zF3s9-hDyRRVi5OqAFP-w_z9Mrx9bt';                  // ← reemplazá
+const SUPABASE_ENABLED  = !SUPABASE_URL.includes('TU_PROYECTO'); // auto-detecta si está configurado
+
+/* ────────────────────────────────────────── */
+
+// Init Supabase client (solo si está configurado)
+let sb = null;
+if(SUPABASE_ENABLED) {
+  try { sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY); }
+  catch(e) { console.warn('Supabase init error:', e); }
+}
+
+/* ── EXPERIMENT CONFIG ─────────────────── */
+const INK_COLORS = {
+  'ROJO':   { css:'#e85b5b', key:'1', label:'Rojo'   },
+  'VERDE':  { css:'#4caf7d', key:'2', label:'Verde'  },
+  'BLANCO': { css:'#f0f0f0', key:'3', label:'Blanco' }
+};
+const WORDS        = ['ROJO','VERDE','BLANCO'];
+const FIXATION_MS  = 500;
+const TIMEOUT_MS   = 3000;
+const ITI_MS       = 300;
+const TOTAL_TRIALS = 24;
+const HIST_KEY     = 'stroop_nype_v2';
+
+/* ── SCORING ───────────────────────────── */
+// Por cada respuesta correcta: 100 pts base + bono exponencial por velocidad
+// bono = 400 * exp(-rt_ms / 700)
+// A 300ms → +306 pts | A 600ms → +187 pts | A 1200ms → +70 pts
+function trialScore(correct, rt_ms) {
+  if(!correct || rt_ms === null) return 0;
+  return 100 + Math.round(400 * Math.exp(-rt_ms / 700));
+}
+
+/* ── STATE ─────────────────────────────── */
+let trials = [], currentTrial = 0, trialData = [];
+let stimulusStart = 0, awaitingResponse = false, trialTimeout = null;
+let sessionScore = 0;
+
+/* ── BUILD TRIALS ──────────────────────── */
+function buildTrials() {
+  const list = [];
+  WORDS.forEach(w => {
+    for(let i = 0; i < 4; i++)
+      list.push({ condition:'congruente', word:w, ink:INK_COLORS[w], correctKey:INK_COLORS[w].key });
+  });
+  [
+    {word:'ROJO',   ink:INK_COLORS['VERDE']},  {word:'ROJO',   ink:INK_COLORS['BLANCO']},
+    {word:'VERDE',  ink:INK_COLORS['ROJO']},   {word:'VERDE',  ink:INK_COLORS['BLANCO']},
+    {word:'BLANCO', ink:INK_COLORS['ROJO']},   {word:'BLANCO', ink:INK_COLORS['VERDE']},
+  ].forEach(t => {
+    for(let i = 0; i < 2; i++)
+      list.push({ condition:'incongruente', word:t.word, ink:t.ink, correctKey:t.ink.key });
+  });
+  for(let i = list.length-1; i > 0; i--) {
+    const j = Math.floor(Math.random()*(i+1));
+    [list[i],list[j]] = [list[j],list[i]];
+  }
+  return list;
+}
+
+/* ── SCREENS ────────────────────────────── */
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+/* ── START ──────────────────────────────── */
+function startExperiment() {
+  trials = buildTrials(); trialData = []; currentTrial = 0; sessionScore = 0;
+  show('screen-trial');
+  setBtns(false);
+  runTrial();
+}
+
+function setBtns(on) {
+  ['rbtn1','rbtn2','rbtn3'].forEach(id => {
+    const el = document.getElementById(id);
+    el.style.opacity = on ? '1' : '0.3';
+    el.style.pointerEvents = on ? 'auto' : 'none';
+  });
+}
+
+/* ── TRIAL LOOP ─────────────────────────── */
+function runTrial() {
+  if(currentTrial >= trials.length) { endExperiment(); return; }
+  const t = trials[currentTrial];
+  document.getElementById('trial-num').textContent    = currentTrial + 1;
+  document.getElementById('progress-fill').style.width = ((currentTrial+1)/TOTAL_TRIALS*100)+'%';
+
+  const fix = document.getElementById('fixation'), stim = document.getElementById('stimulus');
+  fix.style.display = 'block'; stim.style.display = 'none';
+  awaitingResponse = false; setBtns(false);
+
+  setTimeout(() => {
+    fix.style.display  = 'none';
+    stim.textContent   = t.word;
+    stim.style.color   = t.ink.css;
+    stim.style.display = 'block';
+    stimulusStart = performance.now();
+    awaitingResponse = true; setBtns(true);
+    trialTimeout = setTimeout(() => recordResponse(null), TIMEOUT_MS);
+  }, FIXATION_MS);
+}
+
+/* ── RECORD RESPONSE ────────────────────── */
+function recordResponse(key) {
+  if(!awaitingResponse) return;
+  awaitingResponse = false;
+  clearTimeout(trialTimeout);
+  setBtns(false);
+
+  const rt      = Math.round(performance.now() - stimulusStart);
+  const t       = trials[currentTrial];
+  const correct = key !== null && key === t.correctKey;
+  const pts     = trialScore(correct, key !== null ? rt : null);
+  sessionScore += pts;
+
+  if(key !== null) {
+    showFeedback(correct);
+    const el = document.getElementById('rbtn'+key);
+    if(el) { el.classList.add('pressed'); setTimeout(()=>el.classList.remove('pressed'), 180); }
+  }
+
+  trialData.push({
+    trial_index:  currentTrial + 1,
+    condition:    t.condition,
+    word:         t.word,
+    ink_color:    t.ink.label,
+    correct_key:  t.correctKey,
+    response_key: key ?? 'timeout',
+    correct:      key === null ? false : correct,
+    rt_ms:        key === null ? null : rt,
+    score_pts:    pts,
+    timestamp:    new Date().toISOString()
+  });
+
+  currentTrial++;
+  setTimeout(runTrial, ITI_MS);
+}
+
+function showFeedback(ok) {
+  const el = document.getElementById('feedback-flash');
+  el.className = 'feedback-flash '+(ok?'correct':'incorrect')+' show';
+  setTimeout(()=>el.classList.remove('show'), 180);
+}
+
+/* ── KEYBOARD ───────────────────────────── */
+document.addEventListener('keydown', e => {
+  if(!awaitingResponse) return;
+  if(['1','2','3'].includes(e.key)) recordResponse(e.key);
+});
+
+/* ── COMPUTE STATS ──────────────────────── */
+function computeStats(data) {
+  const mean = arr => arr.length ? arr.reduce((a,b)=>a+b,0)/arr.length : null;
+  const con  = data.filter(d=>d.condition==='congruente');
+  const inc  = data.filter(d=>d.condition==='incongruente');
+  const conRT = con.filter(d=>d.correct&&d.rt_ms!==null).map(d=>d.rt_ms);
+  const incRT = inc.filter(d=>d.correct&&d.rt_ms!==null).map(d=>d.rt_ms);
+  const mCon  = mean(conRT), mInc = mean(incRT);
+  return {
+    rt_con:       mCon!==null ? Math.round(mCon) : null,
+    rt_inc:       mInc!==null ? Math.round(mInc) : null,
+    acc_con:      Math.round(con.filter(d=>d.correct).length/con.length*100),
+    acc_inc:      Math.round(inc.filter(d=>d.correct).length/inc.length*100),
+    acc_all:      Math.round(data.filter(d=>d.correct).length/data.length*100),
+    interference: mCon!==null&&mInc!==null ? Math.round(mInc-mCon) : null,
+    total_score:  sessionScore,
+    n_correct:    data.filter(d=>d.correct).length
+  };
+}
+
+/* ── LOCAL HISTORY ──────────────────────── */
+function loadLocalHist() {
+  try { const r=localStorage.getItem(HIST_KEY); return r?JSON.parse(r):[]; } catch{return[];}
+}
+function saveLocalHist(s) {
+  try {
+    let h=loadLocalHist(); h.push({...s, ts:Date.now()});
+    if(h.length>500) h=h.slice(-500);
+    localStorage.setItem(HIST_KEY, JSON.stringify(h));
+  } catch(e){console.warn(e);}
+}
+function histMeans(h) {
+  if(!h||!h.length) return null;
+  const mean = arr=>arr.filter(v=>v!==null).reduce((a,b)=>a+b,0)/arr.filter(v=>v!==null).length;
+  return {
+    rt_con:       Math.round(mean(h.map(x=>x.rt_con))),
+    rt_inc:       Math.round(mean(h.map(x=>x.rt_inc))),
+    acc_con:      Math.round(mean(h.map(x=>x.acc_con))),
+    acc_inc:      Math.round(mean(h.map(x=>x.acc_inc))),
+    interference: Math.round(mean(h.map(x=>x.interference))),
+    acc_all:      Math.round(mean(h.map(x=>x.acc_all))),
+    n:            h.length
+  };
+}
+function clearLocalHistory() {
+  if(!confirm('¿Borrar el historial local de este dispositivo?')) return;
+  localStorage.removeItem(HIST_KEY);
+  ['res-rt-con-hist','res-rt-inc-hist','res-accuracy-hist'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
+  const el=document.getElementById('res-interference-hist'); if(el) el.textContent='Historial local borrado';
+}
+
+/* ── SUPABASE: SAVE SESSION ─────────────── */
+async function saveToSupabase(pid, stats) {
+  if(!sb) return null;
+  try {
+    const { data, error } = await sb.from('stroop_sessions').insert([{
+      participant_id: pid || 'Anónimo',
+      rt_con:        stats.rt_con,
+      rt_inc:        stats.rt_inc,
+      acc_con:       stats.acc_con,
+      acc_inc:       stats.acc_inc,
+      acc_all:       stats.acc_all,
+      interference:  stats.interference,
+      total_score:   stats.total_score,
+      n_correct:     stats.n_correct
+    }]).select();
+    if(error) { console.warn('Supabase insert error:', error); return null; }
+    return data?.[0] ?? null;
+  } catch(e) { console.warn('Supabase error:', e); return null; }
+}
+
+/* ── SUPABASE: LOAD LEADERBOARD ─────────── */
+async function loadLeaderboard() {
+  if(!sb) return null;
+  try {
+    const { data, error } = await sb
+      .from('stroop_sessions')
+      .select('participant_id, total_score, rt_con, rt_inc, acc_all, created_at')
+      .order('total_score', { ascending: false })
+      .limit(15);
+    if(error) { console.warn('Supabase select error:', error); return null; }
+    return data ?? [];
+  } catch(e) { console.warn('Supabase error:', e); return null; }
+}
+
+/* ── SUPABASE: HISTORICAL MEANS ─────────── */
+async function loadSupabaseHist() {
+  if(!sb) return null;
+  try {
+    const { data, error } = await sb.from('stroop_sessions').select('rt_con,rt_inc,acc_con,acc_inc,acc_all,interference');
+    if(error || !data?.length) return null;
+    const mean = arr => arr.filter(v=>v!==null).reduce((a,b)=>a+b,0)/arr.filter(v=>v!==null).length;
+    return {
+      rt_con:       Math.round(mean(data.map(x=>x.rt_con))),
+      rt_inc:       Math.round(mean(data.map(x=>x.rt_inc))),
+      acc_con:      Math.round(mean(data.map(x=>x.acc_con))),
+      acc_inc:      Math.round(mean(data.map(x=>x.acc_inc))),
+      interference: Math.round(mean(data.map(x=>x.interference))),
+      acc_all:      Math.round(mean(data.map(x=>x.acc_all))),
+      n: data.length
+    };
+  } catch(e) { return null; }
+}
+
+/* ── RENDER LEADERBOARD ─────────────────── */
+function renderLeaderboard(rows, currentPid, currentScore) {
+  const container = document.getElementById('lb-rows');
+  const status    = document.getElementById('lb-status');
+
+  if(!rows || !rows.length) {
+    container.innerHTML = '<div class="lb-empty">Todavía no hay registros en Supabase.<br>¡Sé el primero en aparecer aquí!</div>';
+    status.textContent = ''; status.className = 'lb-status';
+    return;
+  }
+
+  status.textContent = rows.length+' participantes'; status.className = 'lb-status ok';
+  container.innerHTML = '';
+
+  // Find position of current session by score
+  let myRankInFull = '?';
+  // highlight row that matches name+score
+  rows.forEach((row, i) => {
+    const rank   = i + 1;
+    const isMe   = currentPid && row.participant_id === currentPid && row.total_score === currentScore;
+    const rankClass = rank===1?'rank-1':rank===2?'rank-2':rank===3?'rank-3':'other';
+    const rankSymbol = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+
+    const div = document.createElement('div');
+    div.className = 'lb-row '+(isMe?'is-you':'')+' rank-'+Math.min(rank,4);
+
+    div.innerHTML = `
+      <div class="lb-rank ${rankClass}">${rankSymbol}</div>
+      <div>
+        <div class="lb-name">${esc(row.participant_id)}${isMe?'<span class="you-badge">TÚ</span>':''}</div>
+        <div class="lb-meta">${row.acc_all}% precisión · TR con ${row.rt_con}ms / inc ${row.rt_inc}ms</div>
+      </div>
+      <div></div>
+      <div class="lb-score ${rank===1?'rank-1':''}">${row.total_score.toLocaleString()}</div>
+    `;
+    container.appendChild(div);
+    if(isMe) myRankInFull = rank;
+  });
+
+  if(currentScore !== undefined) {
+    const rankEl = document.getElementById('res-score-rank');
+    if(rankEl) rankEl.textContent = myRankInFull !== '?' ? `Posición #${myRankInFull} en el ranking` : 'Registrado en el ranking';
+  }
+}
+
+function esc(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ── END EXPERIMENT ─────────────────────── */
+let rtChart=null, accChart=null;
+
+async function endExperiment() {
+  show('screen-results');
+
+  const s   = computeStats(trialData);
+  const pid = document.getElementById('participant-id').value.trim() || 'Anónimo';
+  document.getElementById('participant-label').textContent = 'Participante: '+pid;
+
+  // Score display
+  document.getElementById('res-score').textContent = s.total_score.toLocaleString();
+
+  // Save locally (always)
+  saveLocalHist(s);
+
+  // Save to Supabase + load leaderboard
+  const lbStatus = document.getElementById('lb-status');
+  let hm = null;
+
+  if(SUPABASE_ENABLED && sb) {
+    lbStatus.textContent = '⟳'; lbStatus.className = 'lb-status spin';
+    try {
+      await saveToSupabase(pid, s);
+      const [lbRows, sbHist] = await Promise.all([loadLeaderboard(), loadSupabaseHist()]);
+      hm = sbHist;
+      renderLeaderboard(lbRows, pid, s.total_score);
+    } catch(e) {
+      lbStatus.textContent = 'Error de conexión'; lbStatus.className = 'lb-status err';
+      console.warn(e);
+    }
+  } else {
+    // Fallback: localStorage history + no leaderboard
+    const localHist = loadLocalHist();
+    hm = histMeans(localHist);
+    const container = document.getElementById('lb-rows');
+    container.innerHTML = `
+      <div class="lb-empty" style="text-align:left; padding:16px;">
+        <strong style="color:var(--text)">Supabase no está configurado aún.</strong><br><br>
+        Para activar el ranking compartido:<br>
+        1. Creá un proyecto gratuito en <code style="color:var(--accent2)">supabase.com</code><br>
+        2. Ejecutá el SQL de setup (ver comentario al final del código)<br>
+        3. Reemplazá <code style="color:var(--accent2)">SUPABASE_URL</code> y <code style="color:var(--accent2)">SUPABASE_ANON_KEY</code> en el archivo<br><br>
+        Por ahora los datos se guardan solo en este dispositivo.
+      </div>`;
+    lbStatus.textContent = 'sin conexión'; lbStatus.className = 'lb-status err';
+    document.getElementById('storage-note').textContent =
+      '💾 Los datos se guardan localmente en este dispositivo. Configurá Supabase para el ranking compartido.';
+  }
+
+  // Stats cards
+  const fmt  = v => v!==null ? v : '—';
+  const sign = v => v!==null ? (v>=0?'+'+v:''+v) : '—';
+  document.getElementById('res-rt-con').textContent       = fmt(s.rt_con);
+  document.getElementById('res-rt-inc').textContent       = fmt(s.rt_inc);
+  document.getElementById('res-acc-con').textContent      = 'Precisión: '+s.acc_con+'%';
+  document.getElementById('res-acc-inc').textContent      = 'Precisión: '+s.acc_inc+'%';
+  document.getElementById('res-interference').textContent = sign(s.interference);
+  document.getElementById('res-accuracy').textContent     = s.acc_all;
+
+  if(hm && hm.n > 1) {
+    document.getElementById('res-rt-con-hist').textContent    = 'Promedio (n='+hm.n+'): '+hm.rt_con+' ms';
+    document.getElementById('res-rt-inc-hist').textContent    = 'Promedio (n='+hm.n+'): '+hm.rt_inc+' ms';
+    document.getElementById('res-interference-hist').textContent = 'Promedio (n='+hm.n+'): '+sign(hm.interference)+' ms';
+    document.getElementById('res-accuracy-hist').textContent  = 'Promedio: '+hm.acc_all+'%';
+  } else {
+    document.getElementById('res-interference-hist').textContent = 'Primera sesión registrada';
+  }
+
+  // Trial table
+  const tbody = document.getElementById('trial-tbody');
+  tbody.innerHTML = '';
+  trialData.forEach(d => {
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>'+d.trial_index+'</td><td>'+d.condition+'</td><td>'+d.word+'</td><td>'+d.ink_color+'</td>'+
+      '<td>'+d.correct_key+'</td><td>'+d.response_key+'</td>'+
+      '<td class="'+(d.correct?'yes':'no')+'">'+(d.correct?'✓':'✗')+'</td>'+
+      '<td>'+(d.rt_ms??'timeout')+'</td>'+
+      '<td style="color:var(--accent)">'+d.score_pts+'</td>';
+    tbody.appendChild(tr);
+  });
+
+  drawCharts(s, hm);
+}
+
+/* ── CHARTS ─────────────────────────────── */
+function drawCharts(s, hm) {
+  const base = {
+    responsive:true, maintainAspectRatio:false,
+    plugins:{
+      legend:{labels:{color:'#7e8198', font:{family:"'DM Mono',monospace",size:11}, boxWidth:12, padding:12}},
+      tooltip:{backgroundColor:'#161820', borderColor:'#252730', borderWidth:1,
+        titleColor:'#d8dae8', bodyColor:'#7e8198',
+        titleFont:{family:"'Playfair Display',serif",size:13},
+        bodyFont:{family:"'DM Mono',monospace",size:11}}
+    },
+    scales:{
+      x:{ticks:{color:'#7e8198',font:{family:"'DM Mono',monospace",size:11}},grid:{color:'#1e2030'}},
+      y:{ticks:{color:'#7e8198',font:{family:"'DM Mono',monospace",size:11}},grid:{color:'#1e2030'}}
+    }
+  };
+  const labels = ['Congruente','Incongruente'];
+  if(rtChart)  { rtChart.destroy();  rtChart=null; }
+  if(accChart) { accChart.destroy(); accChart=null; }
+
+  const rtDS = [{
+    label:'Tú', data:[s.rt_con, s.rt_inc],
+    backgroundColor:['rgba(91,141,238,.8)','rgba(91,141,238,.45)'],
+    borderColor:'rgba(91,141,238,1)', borderWidth:1.5, borderRadius:6
+  }];
+  if(hm) rtDS.push({
+    label:'Promedio (n='+hm.n+')', data:[hm.rt_con, hm.rt_inc],
+    backgroundColor:['rgba(232,197,71,.65)','rgba(232,197,71,.35)'],
+    borderColor:'rgba(232,197,71,1)', borderWidth:1.5, borderRadius:6
+  });
+  rtChart = new Chart(document.getElementById('chart-rt'),{
+    type:'bar', data:{labels,datasets:rtDS},
+    options:{...base,scales:{...base.scales,y:{...base.scales.y,title:{display:true,text:'ms',color:'#555870',font:{size:10}}}}}
+  });
+
+  const accDS = [{
+    label:'Tú', data:[s.acc_con, s.acc_inc],
+    backgroundColor:['rgba(76,175,125,.8)','rgba(76,175,125,.45)'],
+    borderColor:'rgba(76,175,125,1)', borderWidth:1.5, borderRadius:6
+  }];
+  if(hm) accDS.push({
+    label:'Promedio (n='+hm.n+')', data:[hm.acc_con, hm.acc_inc],
+    backgroundColor:['rgba(232,197,71,.65)','rgba(232,197,71,.35)'],
+    borderColor:'rgba(232,197,71,1)', borderWidth:1.5, borderRadius:6
+  });
+  accChart = new Chart(document.getElementById('chart-acc'),{
+    type:'bar', data:{labels,datasets:accDS},
+    options:{...base,scales:{...base.scales,y:{...base.scales.y,min:0,max:100,title:{display:true,text:'%',color:'#555870',font:{size:10}}}}}
+  });
+}
+
+/* ── RESTART ─────────────────────────────── */
+function restartExperiment() {
+  document.getElementById('participant-id').value = '';
+  show('screen-start');
+}
+
+/* ── CSV ─────────────────────────────────── */
+function downloadCSV() {
+  const header = ['trial_index','condition','word','ink_color','correct_key','response_key','correct','rt_ms','score_pts','timestamp'];
+  const rows   = trialData.map(d => header.map(k=>String(d[k]??'')).join(','));
+  const blob   = new Blob([header.join(',')+'\n'+rows.join('\n')],{type:'text/csv;charset=utf-8;'});
+  const a      = document.createElement('a');
+  a.href       = URL.createObjectURL(blob);
+  const pid    = document.getElementById('participant-id').value.trim() || 'anonimo';
+  a.download   = 'stroop_'+pid+'_'+Date.now()+'.csv';
+  a.click();
+}
+
+/* ════════════════════════════════════════════
+   📋  SQL DE SETUP PARA SUPABASE
+   ════════════════════════════════════════════
+   Copiá y ejecutá esto en el SQL Editor de tu
+   proyecto de Supabase:
+
+   create table stroop_sessions (
+     id             uuid        default gen_random_uuid() primary key,
+     participant_id text        not null default 'Anónimo',
+     rt_con         integer,
+     rt_inc         integer,
+     acc_con        integer,
+     acc_inc        integer,
+     acc_all        integer,
+     interference   integer,
+     total_score    integer     default 0,
+     n_correct      integer     default 0,
+     created_at     timestamptz default now()
+   );
+
+   alter table stroop_sessions enable row level security;
+
+   create policy "insert public"
+     on stroop_sessions for insert
+     with check (true);
+
+   create policy "select public"
+     on stroop_sessions for select
+     using (true);
+
+   ════════════════════════════════════════════ */
+</script>
+</body>
+</html>
