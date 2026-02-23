@@ -159,7 +159,7 @@ input[type="text"]:focus { border-color: var(--accent2); }
 }
 .res-btn:active, .res-btn.pressed { transform: scale(.94); border-color: var(--accent2); background: rgba(91,141,238,.12); }
 .res-btn .rnum   { font-family: 'DM Mono', monospace; font-size: .75rem; color: var(--muted); }
-.res-btn .rdot   { width: 20px; height: 20px; border-radius: 50%; }
+.res-btn .rdot   { width: 28px; height: 28px; border-radius: 50%; }
 .res-btn .rlabel { font-size: clamp(.78rem,3vw,.88rem); color: var(--text-dim); }
 .keyboard-hint   { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); text-align: center; letter-spacing: .06em; }
 
@@ -265,8 +265,8 @@ input[type="text"]:focus { border-color: var(--accent2); }
     <div class="card-title">Participante</div>
     <div class="field">
       <label>Tu nombre o ID (aparecerá en el ranking)</label>
-      <input type="text" id="participant-id" placeholder="Ej. Ana G."
-             maxlength="30" autocomplete="off" autocorrect="off" spellcheck="false">
+      <input type="text" id="participant-id" placeholder=""
+             maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
   </div>
 
@@ -275,6 +275,9 @@ input[type="text"]:focus { border-color: var(--accent2); }
   </button>
   <p style="margin-top:12px; text-align:center; color:var(--text-dim); font-size:.82rem;">
     24 ensayos · ~2 minutos
+  </p>
+  <p style="margin-top:28px; text-align:center; color:var(--muted); font-size:.7rem; line-height:1.5; font-style:italic;">
+    Creado por Guillermo Solovey para<br>Neurociencia y Psicología Experimental, UTDT.
   </p>
 </div>
 
@@ -302,17 +305,14 @@ input[type="text"]:focus { border-color: var(--accent2); }
       <button class="res-btn" id="rbtn1" onclick="recordResponse('1')" ontouchstart="">
         <span class="rnum">1</span>
         <span class="rdot" style="background:var(--red)"></span>
-        <span class="rlabel">Rojo</span>
       </button>
       <button class="res-btn" id="rbtn2" onclick="recordResponse('2')" ontouchstart="">
         <span class="rnum">2</span>
         <span class="rdot" style="background:var(--green)"></span>
-        <span class="rlabel">Verde</span>
       </button>
       <button class="res-btn" id="rbtn3" onclick="recordResponse('3')" ontouchstart="">
         <span class="rnum">3</span>
         <span class="rdot" style="background:var(--white-ink);border:1px solid #555;"></span>
-        <span class="rlabel">Blanco</span>
       </button>
     </div>
     <div class="keyboard-hint">O presioná las teclas 1 · 2 · 3</div>
@@ -392,7 +392,47 @@ input[type="text"]:focus { border-color: var(--accent2); }
 
   <div class="actions-row">
     <button class="btn btn-primary" onclick="restartExperiment()">Nuevo intento →</button>
+    <button class="btn btn-secondary" onclick="show('screen-info')" style="text-align:center;">
+      ¿Querés saber más sobre el efecto Stroop?
+    </button>
   </div>
+</div>
+
+
+<!-- ══ SCREEN 4 · EXPLICACIÓN ══ -->
+<div id="screen-info" class="screen">
+  <div class="lab-badge">El efecto Stroop</div>
+  <h1 style="font-size:clamp(1.8rem,6vw,2.6rem); margin-bottom:24px;">¿Qué acabás<br>de <span>experimentar</span>?</h1>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">El fenómeno</div>
+    <p style="color:var(--text-dim); font-size:.95rem; line-height:1.75;">
+      En 1935, el psicólogo John Ridley Stroop publicó uno de los hallazgos más replicados de toda la psicología cognitiva: cuando el nombre de un color está escrito en una tinta de color diferente, las personas tardan más en identificar el color de la tinta y cometen más errores. Ese aumento en el tiempo de reacción —que probablemente notaste comparando tus propios resultados— se llama <strong style="color:var(--text);">efecto de interferencia Stroop</strong>.
+    </p>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Por qué ocurre</div>
+    <p style="color:var(--text-dim); font-size:.95rem; line-height:1.75;">
+      Leer palabras es un proceso altamente automatizado: después de años de práctica, el cerebro lo hace de forma casi involuntaria, sin esfuerzo consciente. Identificar un color, en cambio, requiere atención más deliberada. Cuando ambas informaciones entran en conflicto —la palabra dice "ROJO" pero la tinta es verde— el sistema cognitivo tiene que resolver esa competencia entre respuestas, lo que consume tiempo y recursos atencionales. Esta competencia ocurre en regiones del córtex prefrontal, especialmente en la corteza cingulada anterior, que actúa como un árbitro que detecta el conflicto y suprime la respuesta automática incorrecta.
+    </p>
+  </div>
+
+  <div class="card" style="margin-bottom:28px;">
+    <div class="card-title">Para qué sirve</div>
+    <p style="color:var(--text-dim); font-size:.95rem; line-height:1.75;">
+      El test de Stroop se utiliza en neuropsicología clínica para evaluar el <strong style="color:var(--text);">control inhibitorio</strong> y la <strong style="color:var(--text);">flexibilidad cognitiva</strong> —la capacidad de ignorar información irrelevante y enfocarse en lo que importa. Variaciones de la tarea se usan para estudiar el envejecimiento cognitivo, el TDAH, trastornos del estado de ánimo y los efectos de distintas sustancias sobre la atención. El efecto es robusto y aparece en prácticamente todas las culturas estudiadas, aunque su magnitud varía con la edad, el entrenamiento y el estado atencional del momento.
+    </p>
+  </div>
+
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    <button class="btn btn-primary" onclick="restartExperiment()" style="flex:1; min-width:160px;">Nuevo intento →</button>
+    <button class="btn btn-secondary btn-sm" onclick="show('screen-results')" style="flex:1; min-width:120px;">← Volver</button>
+  </div>
+
+  <p style="margin-top:28px; text-align:center; color:var(--muted); font-size:.7rem; line-height:1.5; font-style:italic;">
+    Creado por Guillermo Solovey para<br>Neurociencia y Psicología Experimental, UTDT.
+  </p>
 </div>
 
 
@@ -648,7 +688,7 @@ async function saveToSupabase(pid, stats) {
 async function loadLeaderboard() {
   if(!SUPABASE_ENABLED) return null;
   try {
-    const url = SB_REST + '?select=participant_id,total_score,rt_con,rt_inc,acc_all,created_at&order=total_score.desc&limit=15';
+    const url = SB_REST + '?select=participant_id,total_score,rt_con,rt_inc,acc_all,created_at&order=total_score.desc&limit=10';
     const res = await fetch(url, { headers: SB_HEADERS });
     if(!res.ok) { const t=await res.text(); console.warn('Supabase select error:', res.status, t); return null; }
     return await res.json();
