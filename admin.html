@@ -18,7 +18,7 @@
 body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; padding:32px 18px 56px; }
 body::before { content:''; position:fixed; inset:0; pointer-events:none; background:radial-gradient(ellipse 80% 50% at 50% -10%,rgba(91,141,238,.08) 0%,transparent 70%); z-index:0; }
 
-.wrap { max-width:1000px; margin:0 auto; position:relative; z-index:1; }
+.wrap { max-width:900px; margin:0 auto; position:relative; z-index:1; }
 
 .lab-badge { display:inline-flex; align-items:center; gap:8px; font-family:'DM Mono',monospace; font-size:11px; letter-spacing:.12em; color:var(--accent); text-transform:uppercase; border:1px solid rgba(232,197,71,.25); padding:6px 14px; border-radius:100px; margin-bottom:20px; }
 .lab-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--accent); animation:blink 2s ease infinite; }
@@ -31,57 +31,68 @@ h1 span { color:var(--accent); }
 .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px; margin-bottom:14px; }
 .card-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 
-/* Summary grid */
-.summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:12px; margin-bottom:16px; }
-.stat { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
-.stat-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
-.stat-value { font-family:'Playfair Display',serif; font-size:2rem; font-weight:700; color:#fff; }
-.stat-unit  { font-size:.78rem; color:var(--text-dim); margin-top:2px; }
-.stroop-stat .stat-value { color:var(--accent); }
+/* N sessions */
+.n-pill { display:inline-flex; align-items:baseline; gap:12px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:16px 24px; margin-bottom:16px; }
+.n-label { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); }
+.n-value { font-family:'Playfair Display',serif; font-size:2.2rem; font-weight:700; color:#fff; }
 
 /* Charts */
-.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:16px; }
-@media (max-width:600px) { .charts-grid { grid-template-columns:1fr; } }
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+@media (max-width:560px) { .charts-grid { grid-template-columns:1fr; } }
 .chart-wrap  { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
 .chart-title { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 .chart-h { position:relative; height:200px; }
 
-/* Sessions table */
-.table-wrap { overflow-x:auto; border-radius:8px; border:1px solid var(--border); -webkit-overflow-scrolling:touch; }
-table { width:100%; border-collapse:collapse; font-size:.78rem; min-width:700px; }
-thead { background:#1b1d25; position:sticky; top:0; z-index:1; }
-th { padding:10px 12px; text-align:left; font-family:'DM Mono',monospace; font-size:8.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); white-space:nowrap; }
-td { padding:9px 12px; border-bottom:1px solid rgba(37,39,48,.6); font-family:'DM Mono',monospace; white-space:nowrap; }
-tr:last-child td { border-bottom:none; }
-tr.highlight { background:rgba(232,197,71,.04); }
-.badge-con  { color:var(--green); }
-.badge-inc  { color:var(--red); }
-.score-col  { color:var(--accent); font-weight:500; }
-
 /* Controls */
-.controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.controls { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:20px; }
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:11px 22px; border-radius:9px; font-size:.88rem; font-weight:500; cursor:pointer; border:none; transition:all .2s; min-height:44px; font-family:'DM Sans',sans-serif; }
-.btn-primary { background:var(--accent); color:#0d0e12; }
+.btn-primary   { background:var(--accent); color:#0d0e12; }
 .btn-primary:hover { background:#f0d060; }
 .btn-secondary { background:transparent; color:var(--text); border:1px solid var(--border); }
 .btn-secondary:hover { border-color:var(--text-dim); }
-.btn-danger { color:var(--red); border:1px solid rgba(232,91,91,.3); background:transparent; }
+.btn-danger    { color:var(--red); border:1px solid rgba(232,91,91,.3); background:transparent; }
 .btn-danger:hover { background:rgba(232,91,91,.06); }
 
 .status-line { font-family:'DM Mono',monospace; font-size:11px; color:var(--muted); padding:4px 0; }
 .status-line.ok  { color:var(--green); }
 .status-line.err { color:var(--red); }
-
-.spinner { display:inline-block; animation:spin .8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
+.spin { display:inline-block; animation:spin .8s linear infinite; }
 
-/* Distribution bars */
-.dist-wrap { display:flex; flex-direction:column; gap:6px; }
-.dist-row { display:flex; align-items:center; gap:8px; }
-.dist-label { font-family:'DM Mono',monospace; font-size:10px; color:var(--text-dim); width:56px; flex-shrink:0; }
-.dist-bar-bg { flex:1; height:10px; background:rgba(255,255,255,.05); border-radius:3px; overflow:hidden; }
-.dist-bar-fill { height:100%; border-radius:3px; background:var(--accent2); transition:width .4s ease; }
-.dist-count { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); width:28px; text-align:right; flex-shrink:0; }
+/* Password modal */
+.modal-bg { display:none; position:fixed; inset:0; background:rgba(0,0,0,.75); z-index:100; align-items:center; justify-content:center; padding:24px; }
+.modal-bg.active { display:flex; }
+.modal { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:28px; width:100%; max-width:360px; animation:fadeUp .2s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+.modal h2 { font-family:'Playfair Display',serif; font-size:1.4rem; color:#fff; margin-bottom:8px; }
+.modal p  { font-size:.85rem; color:var(--text-dim); margin-bottom:18px; line-height:1.5; }
+.modal input { width:100%; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:8px; padding:12px 14px; color:var(--text); font-family:'DM Mono',monospace; font-size:15px; outline:none; transition:border-color .2s; margin-bottom:10px; }
+.modal input:focus { border-color:var(--accent2); }
+.modal-err  { font-family:'DM Mono',monospace; font-size:11px; color:var(--red); min-height:18px; margin-bottom:12px; }
+.modal-btns { display:flex; gap:10px; }
+.modal-btns .btn { flex:1; }
+
+/* Leaderboard */
+.lb-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
+.lb-title  { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
+.lb-status { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
+.lb-status.ok { color:var(--green); }
+
+.lb-row { display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:10px; padding:12px 14px; border-radius:9px; margin-bottom:6px; background:var(--surface); border:1px solid var(--border); }
+.lb-row.rank-1 { border-color:rgba(232,197,71,.4); }
+.lb-row.rank-2 { border-color:rgba(160,168,192,.25); }
+.lb-row.rank-3 { border-color:rgba(205,127,50,.25); }
+.lb-rank { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; text-align:center; }
+.lb-rank.r1 { color:var(--gold); }
+.lb-rank.r2 { color:var(--silver); }
+.lb-rank.r3 { color:var(--bronze); }
+.lb-rank.rn { color:var(--muted); font-size:.9rem; font-family:'DM Mono',monospace; }
+.lb-info { min-width:0; }
+.lb-name { font-size:.9rem; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.lb-meta { font-size:.7rem; color:var(--text-dim); font-family:'DM Mono',monospace; margin-top:2px; }
+.lb-score { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--text); white-space:nowrap; }
+.lb-score.r1 { color:var(--gold); }
+.lb-empty { text-align:center; padding:24px; color:var(--muted); font-size:.85rem; font-family:'DM Mono',monospace; }
 
 ::-webkit-scrollbar { width:4px; height:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
@@ -96,24 +107,19 @@ tr.highlight { background:rgba(232,197,71,.04); }
   <p class="page-sub">Resumen agregado de todas las sesiones · Acceso solo para el experimentador</p>
 
   <div class="controls">
-    <button class="btn btn-primary" onclick="loadData()">↻ Actualizar datos</button>
-    <button class="btn btn-secondary" onclick="exportCSV()">Exportar CSV completo</button>
-    <button class="btn btn-danger"   onclick="confirmClear()">Borrar todos los datos</button>
+    <button class="btn btn-primary"   onclick="loadData()">↻ Actualizar</button>
+    <button class="btn btn-secondary" onclick="exportCSV()">Exportar CSV</button>
+    <button class="btn btn-danger"    onclick="openModal()">Borrar todos los datos</button>
     <span class="status-line" id="status">—</span>
   </div>
 
-  <!-- Summary -->
-  <div class="summary-grid" id="summary-grid">
-    <div class="stat"><div class="stat-label">Sesiones totales</div><div class="stat-value" id="s-n">—</div></div>
-    <div class="stat"><div class="stat-label">TR medio · Congruente</div><div class="stat-value" id="s-rt-con">—</div><div class="stat-unit">ms</div></div>
-    <div class="stat"><div class="stat-label">TR medio · Incongruente</div><div class="stat-value" id="s-rt-inc">—</div><div class="stat-unit">ms</div></div>
-    <div class="stat stroop-stat"><div class="stat-label">Interferencia Stroop</div><div class="stat-value" id="s-interf">—</div><div class="stat-unit">ms (Inc − Con)</div></div>
-    <div class="stat"><div class="stat-label">Precisión · Congruente</div><div class="stat-value" id="s-acc-con">—</div><div class="stat-unit">%</div></div>
-    <div class="stat"><div class="stat-label">Precisión · Incongruente</div><div class="stat-value" id="s-acc-inc">—</div><div class="stat-unit">%</div></div>
-    <div class="stat"><div class="stat-label">Puntaje promedio</div><div class="stat-value" id="s-score">—</div></div>
+  <!-- N sessions -->
+  <div class="n-pill">
+    <span class="n-label">Sesiones registradas</span>
+    <span class="n-value" id="s-n">—</span>
   </div>
 
-  <!-- Charts -->
+  <!-- 2 charts -->
   <div class="charts-grid">
     <div class="chart-wrap">
       <div class="chart-title">TR medio por condición (ms)</div>
@@ -123,60 +129,65 @@ tr.highlight { background:rgba(232,197,71,.04); }
       <div class="chart-title">Precisión por condición (%)</div>
       <div class="chart-h"><canvas id="chart-acc"></canvas></div>
     </div>
-    <div class="chart-wrap">
-      <div class="chart-title">Distribución de interferencia Stroop (ms)</div>
-      <div class="chart-h"><canvas id="chart-interf"></canvas></div>
-    </div>
-    <div class="chart-wrap">
-      <div class="chart-title">Distribución de puntajes</div>
-      <div class="chart-h"><canvas id="chart-scores"></canvas></div>
-    </div>
   </div>
 
-  <!-- Sessions table -->
+  <!-- Leaderboard -->
   <div class="card">
-    <div class="card-title" id="table-title">Todas las sesiones</div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>#</th><th>Participante</th><th>Puntaje</th>
-            <th>TR con (ms)</th><th>TR inc (ms)</th><th>Interferencia</th>
-            <th>Prec. con</th><th>Prec. inc</th><th>Prec. global</th><th>Fecha</th>
-          </tr>
-        </thead>
-        <tbody id="sessions-tbody"></tbody>
-      </table>
+    <div class="lb-header">
+      <div class="lb-title">🏆 Tabla de posiciones</div>
+      <span class="lb-status" id="lb-status"></span>
     </div>
+    <div id="lb-rows"></div>
   </div>
 
 </div>
 
+<!-- Password modal -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <h2>Confirmar borrado</h2>
+    <p>Esta acción elimina permanentemente <strong style="color:var(--text)" id="modal-n"></strong>. Ingresá la contraseña de administrador para continuar.</p>
+    <input type="password" id="modal-pwd" placeholder="Contraseña"
+           onkeydown="if(event.key==='Enter') doDelete()">
+    <div class="modal-err" id="modal-err"></div>
+    <div class="modal-btns">
+      <button class="btn btn-danger"    onclick="doDelete()">Borrar</button>
+      <button class="btn btn-secondary" onclick="closeModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <script>
+/* ════════════════════════════════════════
+   ⚙️  CONFIGURACIÓN
+   ════════════════════════════════════════ */
 const SUPABASE_URL      = 'https://irryksaoygdklwtsjsru.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlycnlrc2FveWdka2x3dHNqc3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTM4MTcsImV4cCI6MjA4NzM4OTgxN30.T6_CzKKaU67eWI1k-3WZe2Vc-msjlcs2X5btav39sII';
+
+// ← Cambiá esto por la contraseña que quieras usar
+const ADMIN_PASSWORD = 'nype2025';
+
+/* ════════════════════════════════════════ */
+
 const SB_HEADERS = { 'Content-Type':'application/json', 'apikey':SUPABASE_ANON_KEY, 'Authorization':'Bearer '+SUPABASE_ANON_KEY };
 const SB_REST    = SUPABASE_URL + '/rest/v1/stroop_sessions';
 
-let allData = [];
-let rtChart=null, accChart=null, interfChart=null, scoreChart=null;
+let allData = [], rtChart = null, accChart = null;
 
-const baseChartOpts = {
+const baseOpts = {
   responsive:true, maintainAspectRatio:false,
-  plugins:{ legend:{labels:{color:'#7e8198',font:{family:"'DM Mono',monospace",size:11},boxWidth:12,padding:10}}, tooltip:{backgroundColor:'#161820',borderColor:'#252730',borderWidth:1,titleColor:'#d8dae8',bodyColor:'#7e8198',titleFont:{family:"'DM Mono',monospace",size:11},bodyFont:{family:"'DM Mono',monospace",size:11}} },
+  plugins:{ legend:{display:false}, tooltip:{backgroundColor:'#161820',borderColor:'#252730',borderWidth:1,titleColor:'#d8dae8',bodyColor:'#7e8198',titleFont:{family:"'DM Mono',monospace",size:11},bodyFont:{family:"'DM Mono',monospace",size:11}} },
   scales:{ x:{ticks:{color:'#7e8198',font:{family:"'DM Mono',monospace",size:11}},grid:{color:'#1e2030'}}, y:{ticks:{color:'#7e8198',font:{family:"'DM Mono',monospace",size:11}},grid:{color:'#1e2030'}} }
 };
 
+/* ── LOAD ─────────────────────────────── */
 async function loadData() {
   const status = document.getElementById('status');
-  status.textContent = '⟳ Cargando…'; status.className = 'status-line spinner';
-
+  status.textContent = '⟳'; status.className = 'status-line spin';
   try {
-    // Load all rows ordered by date desc, no limit
-    const res = await fetch(SB_REST+'?select=*&order=created_at.desc', { headers:SB_HEADERS });
+    const res = await fetch(SB_REST+'?select=*&order=total_score.desc', { headers:SB_HEADERS });
     if(!res.ok) throw new Error('HTTP '+res.status+': '+await res.text());
     allData = await res.json();
-
     status.textContent = allData.length+' sesiones cargadas'; status.className = 'status-line ok';
     renderAll();
   } catch(e) {
@@ -184,146 +195,126 @@ async function loadData() {
   }
 }
 
-function mean(arr) { const v=arr.filter(x=>x!==null&&x!==undefined); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; }
-function fmt(v,dec=0) { return v!==null&&v!==undefined ? v.toFixed(dec) : '—'; }
+/* ── RENDER ───────────────────────────── */
+function mean(arr) {
+  const v = arr.filter(x => x !== null && x !== undefined);
+  return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null;
+}
 
 function renderAll() {
-  if(!allData.length) return;
+  document.getElementById('s-n').textContent = allData.length;
 
-  const n      = allData.length;
   const rtCon  = mean(allData.map(d=>d.rt_con));
   const rtInc  = mean(allData.map(d=>d.rt_inc));
-  const interf = mean(allData.map(d=>d.interference));
   const accCon = mean(allData.map(d=>d.acc_con));
   const accInc = mean(allData.map(d=>d.acc_inc));
-  const score  = mean(allData.map(d=>d.total_score));
 
-  document.getElementById('s-n').textContent      = n;
-  document.getElementById('s-rt-con').textContent = fmt(rtCon);
-  document.getElementById('s-rt-inc').textContent = fmt(rtInc);
-  document.getElementById('s-interf').textContent = interf!==null ? (interf>=0?'+':'')+fmt(interf) : '—';
-  document.getElementById('s-acc-con').textContent= fmt(accCon);
-  document.getElementById('s-acc-inc').textContent= fmt(accInc);
-  document.getElementById('s-score').textContent  = fmt(score);
+  // Charts
+  if(rtChart)  { rtChart.destroy();  rtChart=null; }
+  if(accChart) { accChart.destroy(); accChart=null; }
 
-  document.getElementById('table-title').textContent = 'Todas las sesiones ('+n+')';
-
-  drawCharts(rtCon, rtInc, accCon, accInc);
-  drawDistributions();
-  renderTable();
-}
-
-function drawCharts(rtCon, rtInc, accCon, accInc) {
-  if(rtChart)    { rtChart.destroy();    rtChart=null; }
-  if(accChart)   { accChart.destroy();   accChart=null; }
-
-  rtChart = new Chart(document.getElementById('chart-rt'),{
+  rtChart = new Chart(document.getElementById('chart-rt'), {
     type:'bar',
-    data:{ labels:['Congruente','Incongruente'], datasets:[{ data:[rtCon,rtInc], backgroundColor:['rgba(91,141,238,.8)','rgba(91,141,238,.4)'], borderColor:'rgba(91,141,238,1)', borderWidth:1.5, borderRadius:6 }] },
-    options:{...baseChartOpts, plugins:{...baseChartOpts.plugins,legend:{display:false}}, scales:{...baseChartOpts.scales, y:{...baseChartOpts.scales.y, title:{display:true,text:'ms',color:'#555870',font:{size:10}}}}}
+    data:{ labels:['Congruente','Incongruente'], datasets:[{ data:[rtCon?Math.round(rtCon):null, rtInc?Math.round(rtInc):null], backgroundColor:['rgba(91,141,238,.8)','rgba(91,141,238,.4)'], borderColor:'rgba(91,141,238,1)', borderWidth:1.5, borderRadius:6 }] },
+    options:{...baseOpts, scales:{...baseOpts.scales, y:{...baseOpts.scales.y, title:{display:true,text:'ms',color:'#555870',font:{size:10}}}}}
   });
 
-  accChart = new Chart(document.getElementById('chart-acc'),{
+  accChart = new Chart(document.getElementById('chart-acc'), {
     type:'bar',
-    data:{ labels:['Congruente','Incongruente'], datasets:[{ data:[accCon,accInc], backgroundColor:['rgba(76,175,125,.8)','rgba(76,175,125,.4)'], borderColor:'rgba(76,175,125,1)', borderWidth:1.5, borderRadius:6 }] },
-    options:{...baseChartOpts, plugins:{...baseChartOpts.plugins,legend:{display:false}}, scales:{...baseChartOpts.scales, y:{...baseChartOpts.scales.y, min:0, max:100, title:{display:true,text:'%',color:'#555870',font:{size:10}}}}}
+    data:{ labels:['Congruente','Incongruente'], datasets:[{ data:[accCon?Math.round(accCon):null, accInc?Math.round(accInc):null], backgroundColor:['rgba(76,175,125,.8)','rgba(76,175,125,.4)'], borderColor:'rgba(76,175,125,1)', borderWidth:1.5, borderRadius:6 }] },
+    options:{...baseOpts, scales:{...baseOpts.scales, y:{...baseOpts.scales.y, min:0, max:100, title:{display:true,text:'%',color:'#555870',font:{size:10}}}}}
   });
-}
 
-function histogram(vals, bins, min, max) {
-  const step = (max-min)/bins;
-  const counts = Array(bins).fill(0);
-  const labels = [];
-  for(let i=0;i<bins;i++) labels.push(Math.round(min+i*step));
-  vals.forEach(v => {
-    if(v===null||v===undefined) return;
-    const idx = Math.min(bins-1, Math.floor((v-min)/step));
-    if(idx>=0) counts[idx]++;
-  });
-  return {labels, counts};
-}
+  // Leaderboard (top 10)
+  const container = document.getElementById('lb-rows');
+  const lbStatus  = document.getElementById('lb-status');
+  const rows = allData.slice(0, 10);
 
-function drawDistributions() {
-  if(interfChart) { interfChart.destroy(); interfChart=null; }
-  if(scoreChart)  { scoreChart.destroy();  scoreChart=null; }
-
-  const interfVals = allData.map(d=>d.interference).filter(v=>v!==null);
-  const scoreVals  = allData.map(d=>d.total_score).filter(v=>v!==null);
-
-  if(interfVals.length > 1) {
-    const {labels,counts} = histogram(interfVals, 10, Math.min(...interfVals)-10, Math.max(...interfVals)+10);
-    interfChart = new Chart(document.getElementById('chart-interf'),{
-      type:'bar',
-      data:{labels, datasets:[{data:counts, backgroundColor:'rgba(232,197,71,.6)', borderColor:'rgba(232,197,71,1)', borderWidth:1, borderRadius:4}]},
-      options:{...baseChartOpts, plugins:{...baseChartOpts.plugins,legend:{display:false}}, scales:{...baseChartOpts.scales, x:{...baseChartOpts.scales.x, title:{display:true,text:'ms',color:'#555870',font:{size:10}}}, y:{...baseChartOpts.scales.y, title:{display:true,text:'n',color:'#555870',font:{size:10}}}}}
-    });
+  if(!rows.length) {
+    container.innerHTML = '<div class="lb-empty">Todavía no hay sesiones registradas.</div>';
+    lbStatus.textContent = ''; return;
   }
 
-  if(scoreVals.length > 1) {
-    const {labels,counts} = histogram(scoreVals, 10, Math.min(...scoreVals)-50, Math.max(...scoreVals)+50);
-    scoreChart = new Chart(document.getElementById('chart-scores'),{
-      type:'bar',
-      data:{labels, datasets:[{data:counts, backgroundColor:'rgba(91,141,238,.6)', borderColor:'rgba(91,141,238,1)', borderWidth:1, borderRadius:4}]},
-      options:{...baseChartOpts, plugins:{...baseChartOpts.plugins,legend:{display:false}}, scales:{...baseChartOpts.scales, y:{...baseChartOpts.scales.y, title:{display:true,text:'n',color:'#555870',font:{size:10}}}}}
-    });
-  }
-}
+  lbStatus.textContent = 'top ' + rows.length + ' de ' + allData.length;
+  lbStatus.className = 'lb-status ok';
+  container.innerHTML = '';
 
-function renderTable() {
-  const tbody = document.getElementById('sessions-tbody');
-  tbody.innerHTML = '';
-  allData.forEach((d,i) => {
-    const tr = document.createElement('tr');
-    if(i===0) tr.className='highlight';
-    const date = new Date(d.created_at).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    const interf = d.interference!==null ? (d.interference>=0?'+':'')+d.interference : '—';
-    tr.innerHTML = `
-      <td style="color:var(--muted)">${allData.length-i}</td>
-      <td style="color:var(--text);font-weight:500">${esc(d.participant_id)}</td>
-      <td class="score-col">${(d.total_score||0).toLocaleString()}</td>
-      <td>${d.rt_con??'—'}</td>
-      <td>${d.rt_inc??'—'}</td>
-      <td style="color:${d.interference>0?'var(--accent)':'var(--green)'}">${interf}</td>
-      <td>${d.acc_con??'—'}%</td>
-      <td>${d.acc_inc??'—'}%</td>
-      <td>${d.acc_all??'—'}%</td>
-      <td style="color:var(--muted)">${date}</td>
+  rows.forEach((row, i) => {
+    const rank = i + 1;
+    const rankMap = {1:['r1','🥇'], 2:['r2','🥈'], 3:['r3','🥉']};
+    const [rankCls, rankSymbol] = rankMap[rank] ?? ['rn', rank];
+    const div = document.createElement('div');
+    div.className = 'lb-row rank-' + Math.min(rank, 4);
+    div.innerHTML = `
+      <div class="lb-rank ${rankCls}">${rankSymbol}</div>
+      <div class="lb-info">
+        <div class="lb-name">${esc(row.participant_id)}</div>
+        <div class="lb-meta">${row.acc_all ?? '—'}% · con ${row.rt_con ?? '—'} ms / inc ${row.rt_inc ?? '—'} ms</div>
+      </div>
+      <div class="lb-score ${rank===1?'r1':''}">${(row.total_score||0).toLocaleString()}</div>
     `;
-    tbody.appendChild(tr);
+    container.appendChild(div);
   });
 }
 
+/* ── CSV ──────────────────────────────── */
 function exportCSV() {
   if(!allData.length) { alert('No hay datos cargados.'); return; }
   const header = ['participant_id','total_score','rt_con','rt_inc','interference','acc_con','acc_inc','acc_all','n_correct','created_at'];
-  const rows = allData.map(d => header.map(k => JSON.stringify(d[k]??'')).join(','));
-  const csv  = [header.join(','), ...rows].join('\n');
-  const blob = new Blob([csv],{type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  const rows   = allData.map(d => header.map(k => JSON.stringify(d[k]??'')).join(','));
+  const blob   = new Blob([[header.join(','), ...rows].join('\n')], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'stroop_admin_'+Date.now()+'.csv'; a.click();
 }
 
-async function confirmClear() {
-  const n = allData.length;
-  if(!confirm(`⚠️ Vas a borrar TODAS las ${n} sesiones de Supabase.\nEsta acción es irreversible.\n\n¿Confirmás?`)) return;
-  if(!confirm('Segunda confirmación: ¿borrar todos los datos?')) return;
+/* ── MODAL ────────────────────────────── */
+function openModal() {
+  if(!allData.length) { alert('No hay datos para borrar.'); return; }
+  document.getElementById('modal-n').textContent = allData.length + ' sesiones';
+  document.getElementById('modal-pwd').value = '';
+  document.getElementById('modal-err').textContent = '';
+  document.getElementById('modal-bg').classList.add('active');
+  setTimeout(() => document.getElementById('modal-pwd').focus(), 120);
+}
 
+function closeModal() {
+  document.getElementById('modal-bg').classList.remove('active');
+}
+
+document.getElementById('modal-bg').addEventListener('click', e => {
+  if(e.target === document.getElementById('modal-bg')) closeModal();
+});
+
+async function doDelete() {
+  const pwd = document.getElementById('modal-pwd').value;
+  if(pwd !== ADMIN_PASSWORD) {
+    document.getElementById('modal-err').textContent = 'Contraseña incorrecta.';
+    document.getElementById('modal-pwd').value = '';
+    document.getElementById('modal-pwd').focus();
+    return;
+  }
+
+  closeModal();
   const status = document.getElementById('status');
   status.textContent = 'Borrando…'; status.className = 'status-line';
+
   try {
-    // Delete all rows (filter on non-null id to affect all)
     const res = await fetch(SB_REST+'?id=neq.00000000-0000-0000-0000-000000000000', { method:'DELETE', headers:SB_HEADERS });
     if(!res.ok) throw new Error('HTTP '+res.status);
     allData = [];
-    status.textContent = 'Datos borrados.'; status.className = 'status-line ok';
-    document.getElementById('sessions-tbody').innerHTML = '';
-    ['s-n','s-rt-con','s-rt-inc','s-interf','s-acc-con','s-acc-inc','s-score'].forEach(id=>document.getElementById(id).textContent='—');
-  } catch(e) { status.textContent = 'Error al borrar: '+e.message; status.className = 'status-line err'; }
+    document.getElementById('s-n').textContent = '0';
+    document.getElementById('lb-rows').innerHTML = '<div class="lb-empty">Sin datos.</div>';
+    document.getElementById('lb-status').textContent = '';
+    if(rtChart)  { rtChart.destroy();  rtChart=null; }
+    if(accChart) { accChart.destroy(); accChart=null; }
+    status.textContent = 'Datos borrados correctamente.'; status.className = 'status-line ok';
+  } catch(e) {
+    status.textContent = 'Error al borrar: '+e.message; status.className = 'status-line err';
+  }
 }
 
 function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-// Load on page open
 loadData();
 </script>
 </body>
