@@ -1,0 +1,19 @@
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # Corre los lunes y jueves a las 8am UTC (5am Argentina)
+    - cron: '0 8 * * 1'
+    - cron: '0 8 * * 4'
+  workflow_dispatch: # permite correrlo manualmente desde GitHub si hace falta
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        run: |
+          curl --silent --output /dev/null --write-out "HTTP %{http_code}" \
+            "https://irryksaoygdklwtsjsru.supabase.co/rest/v1/stroop_sessions?limit=1" \
+            -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlycnlrc2FveWdka2x3dHNqc3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTM4MTcsImV4cCI6MjA4NzM4OTgxN30.T6_CzKKaU67eWI1k-3WZe2Vc-msjlcs2X5btav39sII" \
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlycnlrc2FveWdka2x3dHNqc3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTM4MTcsImV4cCI6MjA4NzM4OTgxN30.T6_CzKKaU67eWI1k-3WZe2Vc-msjlcs2X5btav39sII"
