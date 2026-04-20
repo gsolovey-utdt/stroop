@@ -11,9 +11,17 @@ jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Supabase
+      - name: Ping Supabase (write to keep_alive table)
         run: |
-          curl --silent --output /dev/null --write-out "HTTP %{http_code}" \
-            "https://irryksaoygdklwtsjsru.supabase.co/rest/v1/stroop_sessions?limit=1" \
+          HTTP_CODE=$(curl --silent --output /dev/null --write-out "%{http_code}" \
+            -X PATCH \
+            "https://irryksaoygdklwtsjsru.supabase.co/rest/v1/keep_alive?id=eq.1" \
             -H "apikey: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlycnlrc2FveWdka2x3dHNqc3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTM4MTcsImV4cCI6MjA4NzM4OTgxN30.T6_CzKKaU67eWI1k-3WZe2Vc-msjlcs2X5btav39sII" \
-            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlycnlrc2FveWdka2x3dHNqc3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTM4MTcsImV4cCI6MjA4NzM4OTgxN30.T6_CzKKaU67eWI1k-3WZe2Vc-msjlcs2X5btav39sII"
+            -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imlycnlrc2FveWdka2x3dHNqc3J1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzE4MTM4MTcsImV4cCI6MjA4NzM4OTgxN30.T6_CzKKaU67eWI1k-3WZe2Vc-msjlcs2X5btav39sII" \
+            -H "Content-Type: application/json" \
+            -d "{\"last_ping\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}")
+          echo "HTTP $HTTP_CODE"
+          if [ "$HTTP_CODE" != "204" ]; then
+            echo "Error: esperaba 204, recibí $HTTP_CODE"
+            exit 1
+          fi
