@@ -72,28 +72,6 @@ h1 span { color:var(--accent); }
 .modal-btns { display:flex; gap:10px; }
 .modal-btns .btn { flex:1; }
 
-/* Leaderboard */
-.lb-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px; }
-.lb-title  { font-family:'DM Mono',monospace; font-size:10px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); }
-.lb-status { font-family:'DM Mono',monospace; font-size:10px; color:var(--muted); }
-.lb-status.ok { color:var(--green); }
-
-.lb-row { display:grid; grid-template-columns:36px 1fr auto; align-items:center; gap:10px; padding:12px 14px; border-radius:9px; margin-bottom:6px; background:var(--surface); border:1px solid var(--border); }
-.lb-row.rank-1 { border-color:rgba(232,197,71,.4); }
-.lb-row.rank-2 { border-color:rgba(160,168,192,.25); }
-.lb-row.rank-3 { border-color:rgba(205,127,50,.25); }
-.lb-rank { font-family:'Playfair Display',serif; font-size:1.2rem; font-weight:700; text-align:center; }
-.lb-rank.r1 { color:var(--gold); }
-.lb-rank.r2 { color:var(--silver); }
-.lb-rank.r3 { color:var(--bronze); }
-.lb-rank.rn { color:var(--muted); font-size:.9rem; font-family:'DM Mono',monospace; }
-.lb-info { min-width:0; }
-.lb-name { font-size:.9rem; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.lb-meta { font-size:.7rem; color:var(--text-dim); font-family:'DM Mono',monospace; margin-top:2px; }
-.lb-score { font-family:'Playfair Display',serif; font-size:1.3rem; font-weight:700; color:var(--text); white-space:nowrap; }
-.lb-score.r1 { color:var(--gold); }
-.lb-empty { text-align:center; padding:24px; color:var(--muted); font-size:.85rem; font-family:'DM Mono',monospace; }
-
 ::-webkit-scrollbar { width:4px; height:4px; }
 ::-webkit-scrollbar-track { background:transparent; }
 ::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
@@ -129,15 +107,6 @@ h1 span { color:var(--accent); }
       <div class="chart-title">Precisión por condición (%)</div>
       <div class="chart-h"><canvas id="chart-acc"></canvas></div>
     </div>
-  </div>
-
-  <!-- Leaderboard -->
-  <div class="card">
-    <div class="lb-header">
-      <div class="lb-title">🏆 Tabla de posiciones</div>
-      <span class="lb-status" id="lb-status"></span>
-    </div>
-    <div id="lb-rows"></div>
   </div>
 
 </div>
@@ -185,7 +154,7 @@ async function loadData() {
   const status = document.getElementById('status');
   status.textContent = '⟳'; status.className = 'status-line spin';
   try {
-    const res = await fetch(SB_REST+'?select=*&order=total_score.desc', { headers:SB_HEADERS });
+    const res = await fetch(SB_REST+'?select=*', { headers:SB_HEADERS });
     if(!res.ok) throw new Error('HTTP '+res.status+': '+await res.text());
     allData = await res.json();
     status.textContent = allData.length+' sesiones cargadas'; status.className = 'status-line ok';
@@ -225,36 +194,6 @@ function renderAll() {
     options:{...baseOpts, scales:{...baseOpts.scales, y:{...baseOpts.scales.y, min:0, max:100, title:{display:true,text:'%',color:'#555870',font:{size:10}}}}}
   });
 
-  // Leaderboard (top 10)
-  const container = document.getElementById('lb-rows');
-  const lbStatus  = document.getElementById('lb-status');
-  const rows = allData.slice(0, 10);
-
-  if(!rows.length) {
-    container.innerHTML = '<div class="lb-empty">Todavía no hay sesiones registradas.</div>';
-    lbStatus.textContent = ''; return;
-  }
-
-  lbStatus.textContent = 'top ' + rows.length + ' de ' + allData.length;
-  lbStatus.className = 'lb-status ok';
-  container.innerHTML = '';
-
-  rows.forEach((row, i) => {
-    const rank = i + 1;
-    const rankMap = {1:['r1','🥇'], 2:['r2','🥈'], 3:['r3','🥉']};
-    const [rankCls, rankSymbol] = rankMap[rank] ?? ['rn', rank];
-    const div = document.createElement('div');
-    div.className = 'lb-row rank-' + Math.min(rank, 4);
-    div.innerHTML = `
-      <div class="lb-rank ${rankCls}">${rankSymbol}</div>
-      <div class="lb-info">
-        <div class="lb-name">${esc(row.participant_id)}</div>
-        <div class="lb-meta">${row.acc_all ?? '—'}% · con ${row.rt_con ?? '—'} ms / inc ${row.rt_inc ?? '—'} ms</div>
-      </div>
-      <div class="lb-score ${rank===1?'r1':''}">${(row.total_score||0).toLocaleString()}</div>
-    `;
-    container.appendChild(div);
-  });
 }
 
 /* ── CSV ──────────────────────────────── */
@@ -303,8 +242,6 @@ async function doDelete() {
     if(!res.ok) throw new Error('HTTP '+res.status);
     allData = [];
     document.getElementById('s-n').textContent = '0';
-    document.getElementById('lb-rows').innerHTML = '<div class="lb-empty">Sin datos.</div>';
-    document.getElementById('lb-status').textContent = '';
     if(rtChart)  { rtChart.destroy();  rtChart=null; }
     if(accChart) { accChart.destroy(); accChart=null; }
     status.textContent = 'Datos borrados correctamente.'; status.className = 'status-line ok';
@@ -312,8 +249,6 @@ async function doDelete() {
     status.textContent = 'Error al borrar: '+e.message; status.className = 'status-line err';
   }
 }
-
-function esc(str) { return String(str||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 loadData();
 </script>

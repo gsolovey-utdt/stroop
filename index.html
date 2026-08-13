@@ -197,33 +197,6 @@ input[type="text"]:focus { border-color: var(--accent2); }
 .chart-title { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
 .chart-container { position: relative; height: 220px; }
 
-/* ── LEADERBOARD ──────────────────────── */
-.lb-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px; }
-.lb-title  { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
-.lb-status { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
-.lb-status.ok   { color: var(--green); }
-.lb-status.err  { color: var(--red); }
-.lb-status.spin { color: var(--accent2); display: inline-block; animation: spin .8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg) } }
-
-.lb-row { display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 9px; margin-bottom: 6px; background: var(--surface); border: 1px solid var(--border); }
-.lb-row.is-you { border-color: rgba(232,197,71,.4); background: linear-gradient(90deg,rgba(232,197,71,.07),transparent); }
-.lb-row.rank-1 { border-color: rgba(232,197,71,.4); }
-.lb-row.rank-2 { border-color: rgba(160,168,192,.25); }
-.lb-row.rank-3 { border-color: rgba(205,127,50,.25); }
-.lb-rank { font-family: 'Playfair Display', serif; font-size: 1.2rem; font-weight: 700; text-align: center; }
-.lb-rank.r1 { color: var(--gold); }
-.lb-rank.r2 { color: var(--silver); }
-.lb-rank.r3 { color: var(--bronze); }
-.lb-rank.rn { color: var(--muted); font-size: .9rem; font-family: 'DM Mono', monospace; }
-.lb-info   { min-width: 0; }
-.lb-name   { font-size: .9rem; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.you-badge { font-family: 'DM Mono', monospace; font-size: .62rem; color: var(--accent); background: rgba(232,197,71,.15); border: 1px solid rgba(232,197,71,.3); padding: 1px 5px; border-radius: 4px; margin-left: 6px; vertical-align: middle; }
-.lb-meta   { font-size: .7rem; color: var(--text-dim); font-family: 'DM Mono', monospace; margin-top: 2px; }
-.lb-score  { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 700; color: var(--text); white-space: nowrap; }
-.lb-score.r1 { color: var(--gold); }
-.lb-empty  { text-align: center; padding: 24px; color: var(--muted); font-size: .85rem; font-family: 'DM Mono', monospace; }
-
 /* ── SHARE TOAST ──────────────────────── */
 .toast {
   position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -286,7 +259,7 @@ input[type="text"]:focus { border-color: var(--accent2); }
   <div class="card">
     <div class="card-title">Participante</div>
     <div class="field">
-      <label>Tu nombre o ID (aparecerá en el ranking)</label>
+      <label>Tu nombre o ID</label>
       <input type="text" id="participant-id" placeholder=""
              maxlength="20" autocomplete="off" autocorrect="off" spellcheck="false">
     </div>
@@ -354,7 +327,6 @@ input[type="text"]:focus { border-color: var(--accent2); }
   <div class="score-hero">
     <div class="score-label">Puntaje total</div>
     <div class="score-value" id="res-score">0</div>
-    <div class="score-sub"   id="res-score-rank"></div>
     <div class="score-formula">100 pts base + 400·e<sup>−TR/700</sup> por respuesta correcta</div>
   </div>
 
@@ -386,15 +358,6 @@ input[type="text"]:focus { border-color: var(--accent2); }
       <div class="stat-unit">%</div>
       <div class="stat-sub"  id="res-accuracy-hist"></div>
     </div>
-  </div>
-
-  <!-- Leaderboard -->
-  <div class="card" style="margin-bottom:14px;">
-    <div class="lb-header">
-      <div class="lb-title">🏆 Tabla de posiciones</div>
-      <span class="lb-status" id="lb-status"></span>
-    </div>
-    <div id="lb-rows"></div>
   </div>
 
   <!-- Charts -->
@@ -733,15 +696,6 @@ async function saveToSupabase(pid, stats) {
   } catch(e) { console.warn('Supabase insert exception:',e.message); return null; }
 }
 
-async function loadLeaderboard() {
-  if(!SUPABASE_ENABLED) return null;
-  try {
-    const res = await fetch(SB_REST+'?select=participant_id,total_score,rt_con,rt_inc,acc_all&order=total_score.desc&limit=10', { headers:SB_HEADERS });
-    if(!res.ok) { const t=await res.text(); console.warn('Supabase select error:',res.status,t); return null; }
-    return await res.json();
-  } catch(e) { console.warn('Supabase select exception:',e.message); return null; }
-}
-
 async function loadSupabaseHist() {
   if(!SUPABASE_ENABLED) return null;
   try {
@@ -754,28 +708,6 @@ async function loadSupabaseHist() {
   } catch(e) { return null; }
 }
 
-/* ── LEADERBOARD RENDER ───────────────── */
-function renderLeaderboard(rows, currentPid, currentScore) {
-  const container = document.getElementById('lb-rows');
-  const status    = document.getElementById('lb-status');
-  if(!rows||!rows.length) { container.innerHTML='<div class="lb-empty">Todavía no hay registros.<br>¡Sé el primero!</div>'; status.textContent=''; status.className='lb-status'; return; }
-  status.textContent = rows.length+' participantes'; status.className = 'lb-status ok';
-  container.innerHTML = '';
-  rows.forEach((row,i) => {
-    const rank = i+1;
-    const isMe = currentPid && row.participant_id===currentPid && row.total_score===currentScore;
-    const rankMap = {1:['r1','🥇'],2:['r2','🥈'],3:['r3','🥉']};
-    const [rankCls, rankSymbol] = rankMap[rank] ?? ['rn', rank];
-    const div = document.createElement('div');
-    div.className = 'lb-row'+(isMe?' is-you':'')+' rank-'+Math.min(rank,4);
-    div.innerHTML = `<div class="lb-rank ${rankCls}">${rankSymbol}</div><div class="lb-info"><div class="lb-name">${esc(row.participant_id)}${isMe?'<span class="you-badge">TÚ</span>':''}</div><div class="lb-meta">${row.acc_all}% · con ${row.rt_con??'—'}ms / inc ${row.rt_inc??'—'}ms</div></div><div class="lb-score ${rank===1?'r1':''}">${row.total_score.toLocaleString()}</div>`;
-    container.appendChild(div);
-    if(isMe) { const el=document.getElementById('res-score-rank'); if(el) el.textContent='Posición #'+rank+' en el ranking'; }
-  });
-}
-
-function esc(str) { return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-
 /* ── END EXPERIMENT ───────────────────── */
 let rtChart=null, accChart=null;
 
@@ -787,24 +719,16 @@ async function endExperiment() {
   document.getElementById('res-score').textContent = s.total_score.toLocaleString();
   saveLocalHist(s);
 
-  const lbStatus = document.getElementById('lb-status');
   let hm = null;
   if(SUPABASE_ENABLED) {
-    lbStatus.textContent = '⟳'; lbStatus.className = 'lb-status spin';
     try {
       await saveToSupabase(pid, s);
-      const [lbRows, sbHist] = await Promise.all([loadLeaderboard(), loadSupabaseHist()]);
-      hm = sbHist;
-      renderLeaderboard(lbRows, pid, s.total_score);
+      hm = await loadSupabaseHist();
     } catch(e) {
-      lbStatus.textContent = 'Error de conexión'; lbStatus.className = 'lb-status err';
       hm = histMeans(loadLocalHist());
-      document.getElementById('lb-rows').innerHTML = '<div class="lb-empty">No se pudo conectar. Verificá tu conexión.</div>';
     }
   } else {
     hm = histMeans(loadLocalHist());
-    lbStatus.textContent = 'sin conexión'; lbStatus.className = 'lb-status err';
-    document.getElementById('lb-rows').innerHTML = '<div class="lb-empty">Supabase no configurado.</div>';
   }
 
   const fmt  = v => v!==null ? v : '—';
